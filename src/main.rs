@@ -7,7 +7,7 @@ mod journal;
 fn main() {
     let args = cli::parse_args();
     match args {
-        cli::JournalTimeCli::Today(_) => edit_today(),
+        cli::JournalTimeCli::Today => edit_today(),
         args => todo(args),
     }
     .unwrap();

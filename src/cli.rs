@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::Parser;
 
 pub fn parse_args() -> JournalTimeCli {
     JournalTimeCli::parse()
@@ -8,28 +8,10 @@ pub fn parse_args() -> JournalTimeCli {
 #[command(name = "jt")]
 #[command(bin_name = "jt")]
 pub enum JournalTimeCli {
-    Today(TodayArgs),
-    View(ViewArgs),
-    Sync(SyncArgs),
-
-    #[command(subcommand)]
-    Slack(AppSubcommand),
-
-    #[command(subcommand)]
-    GitHub(AppSubcommand), // todo - add "gh" shorthand.
-}
-
-#[derive(Subcommand, Debug)]
-pub enum AppSubcommand {
+    Today,
+    View,
+    Sync,
     Recent,
     Config,
+    Find,
 }
-
-#[derive(Parser, Debug)]
-pub struct TodayArgs {}
-
-#[derive(Parser, Debug)]
-pub struct ViewArgs {}
-
-#[derive(Parser, Debug)]
-pub struct SyncArgs {}

@@ -7,10 +7,10 @@ easy to edit and version the files on my own, but `jt` makes it easier.
 
 - `jt today` - open `$EDITOR` for the current week.
 - `jt find EXPR` - Run `git grep` or `ag`.
-- `jt $APP recent` - list recent APP (slack, github, gdrive) activity
+- `jt recent` - list recent (slack, github, gdrive) activity
   (mentions, messages, particular rooms) in a UI, jump from activity item to
   journal.
-- `jt $APP config` - edit things like list of interesting github repos,
+- `jt config` - edit things like list of interesting github repos,
   interesting slack channels, etc.
 - `jt view` - open a UI listing recent journals
 - `jt sync -n|-y` - make it so that the journal is completely committed and
