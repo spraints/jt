@@ -93,8 +93,8 @@ impl JournalFile {
 
         let mut f = OpenOptions::new()
             .read(true)
-            .write(true)
             .create(true)
+            .append(true)
             .open(self.path())?;
 
         {
@@ -105,7 +105,7 @@ impl JournalFile {
                 match line.trim() {
                     s if s == week_header => has_week_header = true,
                     s if s == day_header => has_day_header = true,
-                    s if s == "" => ends_with_blank_line = true,
+                    "" => ends_with_blank_line = true,
                     _ => (),
                 };
                 line.clear();
@@ -122,7 +122,7 @@ impl JournalFile {
 
             if !has_day_header {
                 if !ends_with_blank_line {
-                    writeln!(&mut w, "")?;
+                    writeln!(&mut w)?;
                 }
                 writeln!(&mut w, "{day_header}")?;
             }
@@ -143,7 +143,7 @@ impl JournalFile {
             .arg("commit")
             .arg("-q")
             .arg("-m")
-            .arg(format!("edited entry"))
+            .arg("edited entry")
             .status()?;
 
         println!("push journal repository...");
