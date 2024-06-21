@@ -1,3 +1,6 @@
+use cli::JournalTimeCli::*;
+use errs::check_status;
+
 use crate::journal::Journal;
 
 mod cli;
@@ -7,7 +10,8 @@ mod journal;
 fn main() {
     let args = cli::parse_args();
     match args {
-        cli::JournalTimeCli::Today => edit_today(),
+        Today => edit_today(),
+        JustPush => tmp_push(),
         args => todo(args),
     }
     .unwrap();
@@ -29,4 +33,22 @@ fn edit_today() -> errs::Result<()> {
         .status()?;
 
     this_week.commit()
+}
+
+fn tmp_push() -> errs::Result<()> {
+    // todo - use 'pt config' to set the remote on the Journal so that 'jt today' can just 'git
+    // push'.
+    let push_url = "git@github.com:spraints/work-journal.git";
+
+    println!("push to {push_url}...");
+    check_status(
+        std::process::Command::new("git")
+            .arg("push")
+            .arg("-q")
+            .arg(push_url)
+            .arg("refs/heads/main:refs/heads/main")
+            .status()?,
+    )?;
+
+    Ok(())
 }
