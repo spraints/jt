@@ -132,6 +132,7 @@ impl JournalFile {
     }
 
     pub fn commit(&mut self) -> errs::Result<()> {
+        // todo - suppress output maybe, or show commands?
         println!("commit changes to journal repository...");
         Command::new("git")
             .current_dir(&self.repo_path)
@@ -146,6 +147,8 @@ impl JournalFile {
             .arg("edited entry")
             .status()?;
 
+        // todo - if the push doesn't work, add a hint to run 'pt config', which will be able to
+        // set up a remote.
         println!("push journal repository...");
         Command::new("git")
             .current_dir(&self.repo_path)
