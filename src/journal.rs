@@ -5,7 +5,7 @@ use std::process::Command;
 
 use chrono::{prelude::*, Days};
 
-use crate::errs::{self, check_status};
+use crate::errs::{self, CheckStatus};
 
 pub struct Journal {
     repo_path: PathBuf,
@@ -22,11 +22,18 @@ impl Journal {
         Ok(journal)
     }
 
+    pub fn git_cmd(&self) -> Command {
+        let mut c = Command::new("git");
+        c.current_dir(&self.repo_path);
+        return c;
+    }
+
     pub fn current_week(&self) -> errs::Result<JournalFile> {
         let today = Local::now().date_naive();
         let res = JournalFile {
             repo_path: self.repo_path.clone(),
             today,
+            journal: self,
         };
         create_dir_all(
             res.path()
@@ -41,7 +48,8 @@ impl Journal {
             Command::new("git")
                 .arg("init")
                 .arg(&self.repo_path)
-                .status()?;
+                .status()?
+                .check()?;
         }
         Ok(())
     }
@@ -61,12 +69,13 @@ impl Journal {
     }
 }
 
-pub struct JournalFile {
+pub struct JournalFile<'a> {
     repo_path: PathBuf,
     today: NaiveDate,
+    journal: &'a Journal,
 }
 
-impl JournalFile {
+impl<'a> JournalFile<'a> {
     pub fn start_of_week(&self) -> NaiveDate {
         self.today - Days::new(self.today.weekday().days_since(Weekday::Mon) as u64)
     }
@@ -134,33 +143,27 @@ impl JournalFile {
     pub fn commit(&mut self) -> errs::Result<()> {
         // todo - suppress output maybe, or show commands?
         println!("commit changes to journal repository...");
-        check_status(
-            Command::new("git")
-                .current_dir(&self.repo_path)
-                .arg("add")
-                .arg(self.relative_path())
-                .status()?,
-        )?;
+        self.journal
+            .git_cmd()
+            .arg("add")
+            .arg(self.relative_path())
+            .status()?
+            .check()?;
 
-        check_status(
-            Command::new("git")
-                .current_dir(&self.repo_path)
-                .arg("commit")
-                .arg("-q")
-                .arg("-m")
-                .arg("edited entry")
-                .status()?,
-        )?;
+        self.journal
+            .git_cmd()
+            .arg("commit")
+            .arg("-q")
+            .arg("-m")
+            .arg("edited entry")
+            .status()?
+            .check()?;
 
         // todo - if the push doesn't work, add a hint to run 'pt config', which will be able to
         // set up a remote.
         println!("push journal repository...");
-        check_status(
-            Command::new("git")
-                .current_dir(&self.repo_path)
-                .arg("push")
-                .status()?,
-        )?;
+
+        self.journal.git_cmd().arg("push").status()?.check()?;
 
         Ok(())
     }
