@@ -12,11 +12,16 @@ pub struct Journal {
 }
 
 impl Journal {
-    pub fn new() -> errs::Result<Self> {
+    pub fn path() -> errs::Result<PathBuf> {
         let mut repo_path = Self::data_dir()?;
         repo_path.push("journaltime/journal");
+        Ok(repo_path)
+    }
 
-        let mut journal = Self { repo_path };
+    pub fn new() -> errs::Result<Self> {
+        let mut journal = Self {
+            repo_path: Self::path()?,
+        };
         journal.ensure_repo()?;
 
         Ok(journal)

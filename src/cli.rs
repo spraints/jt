@@ -23,6 +23,9 @@ pub enum JournalTimeCli {
     /// today'.
     JustFetch,
 
+    /// Show the path to the journal repo.
+    Path,
+
     View,
     Sync,
     Recent,

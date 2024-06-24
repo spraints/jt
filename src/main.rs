@@ -20,6 +20,7 @@ fn main() {
         Today => edit_today(),
         JustPush => tmp_push(),
         JustFetch => tmp_fetch(),
+        Path => show_path(),
         args => todo(args),
     }
     .unwrap();
@@ -27,6 +28,11 @@ fn main() {
 
 fn todo(args: cli::JournalTimeCli) -> errs::Result<()> {
     println!("todo! {args:?}");
+    Ok(())
+}
+
+fn show_path() -> errs::Result<()> {
+    println!("{}", Journal::path()?.display());
     Ok(())
 }
 
