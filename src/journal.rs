@@ -155,6 +155,8 @@ impl<'a> JournalFile<'a> {
             .status()?
             .check()?;
 
+        // TODO - this will exit with an error if there's nothing to commit, but that's something
+        // we can ignore here.
         self.journal
             .git_cmd()
             .arg("commit")
