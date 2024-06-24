@@ -17,6 +17,12 @@ pub enum JournalTimeCli {
     /// today'.
     JustPush,
 
+    /// Hack to fetch my journal from github to a new machine.
+    ///
+    /// Eventually, this will be replaced with 'pt config' and an automatic push at the end of 'pt
+    /// today'.
+    JustFetch,
+
     View,
     Sync,
     Recent,
