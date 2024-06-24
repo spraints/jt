@@ -3,6 +3,16 @@
 Track what I do each week in a Git repository that `jt` maintains for me. It's
 easy to edit and version the files on my own, but `jt` makes it easier.
 
+## Install
+
+You can install without cloning like this:
+
+    cargo install --git https://github.com/spraints/jt
+
+You can install from a local checkout like this:
+
+    cargo install --path .
+
 ## TODO:
 
 - `jt today` - open `$EDITOR` for the current week.
