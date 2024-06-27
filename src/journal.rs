@@ -1,6 +1,6 @@
 use std::fs::{create_dir_all, OpenOptions};
 use std::io::{BufRead, BufReader, BufWriter, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use chrono::{prelude::*, Days};
@@ -12,6 +12,13 @@ pub struct Journal {
 }
 
 impl Journal {
+    pub fn log_file<P: AsRef<Path>>(name: P) -> errs::Result<PathBuf> {
+        let mut log_file = Self::data_dir()?;
+        log_file.push("journaltime");
+        log_file.push(name);
+        Ok(log_file)
+    }
+
     pub fn path() -> errs::Result<PathBuf> {
         let mut repo_path = Self::data_dir()?;
         repo_path.push("journaltime/journal");

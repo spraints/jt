@@ -1,3 +1,5 @@
+use std::{io::Write, path::PathBuf};
+
 use cli::JournalTimeCli::*;
 use errs::CheckStatus;
 
@@ -16,14 +18,16 @@ const REMOTE_REPO_URL: &'static str = "git@github.com:spraints/work-journal.git"
 
 fn main() {
     let args = cli::parse_args();
-    match args {
+    let res = match args {
         Today => edit_today(),
         JustPush => tmp_push(),
         JustFetch => tmp_fetch(),
         Path => show_path(),
         args => todo(args),
+    };
+    if let Err(e) = res {
+        eprintln!("error: {e:?}");
     }
-    .unwrap();
 }
 
 fn todo(args: cli::JournalTimeCli) -> errs::Result<()> {
@@ -41,12 +45,54 @@ fn edit_today() -> errs::Result<()> {
     let mut this_week = journal.current_week()?;
     this_week.prepare_today()?;
 
+    let log_file = Journal::log_file("today.log")?;
+    let journal_dir = Journal::path()?;
+    std::thread::spawn(move || {
+        tmp_inotify(log_file, journal_dir);
+    });
+    //std::thread::sleep(std::time::Duration::from_secs(3));
+
+    // TODO - run the editor concurrently with a filesystem watcher that commits after every save.
     let editor = std::env::var("EDITOR")?;
     std::process::Command::new(editor)
         .arg(this_week.path())
         .status()?;
 
     this_week.commit()
+}
+
+fn tmp_inotify(log_file: PathBuf, journal_dir: PathBuf) {
+    eprintln!("sup lets see {log_file:?} // {journal_dir:?}");
+
+    use inotify::{Inotify, WatchMask};
+    use std::fs::OpenOptions;
+    use std::time::Instant;
+
+    fn go<W: Write>(mut lf: W, journal_dir: PathBuf) -> errs::Result<()> {
+        let start = Instant::now();
+        let mut inotify = Inotify::init()?;
+        eprintln!("watching {journal_dir:?}...");
+        writeln!(lf, "tmp_inotify: watching {journal_dir:?}")?;
+        inotify.watches().add(journal_dir, WatchMask::MODIFY)?;
+        let mut buffer = [0u8; 4096];
+        loop {
+            let events = inotify.read_events_blocking(&mut buffer)?;
+            let t = Instant::now().duration_since(start);
+            for event in events {
+                writeln!(lf, "tmp_inotify: [{t:?}] {event:?}")?;
+            }
+        }
+    }
+
+    match OpenOptions::new().create(true).append(true).open(&log_file) {
+        Ok(mut f) => match go(&mut f, journal_dir) {
+            Err(e) => writeln!(f, "tmp_inotify: fatal: {e:?}").unwrap(),
+            Ok(()) => eprintln!("tmp_inotify: go finished"),
+        },
+        Err(e) => eprintln!("{log_file:?}: {e:?}"),
+    };
+
+    eprintln!("tmp_inotify: DONE!");
 }
 
 fn tmp_push() -> errs::Result<()> {
