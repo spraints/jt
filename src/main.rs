@@ -46,7 +46,7 @@ fn edit_today() -> errs::Result<()> {
     this_week.prepare_today()?;
 
     let log_file = Journal::log_file("today.log")?;
-    let journal_dir = Journal::path()?;
+    let journal_dir = this_week.path();
     std::thread::spawn(move || {
         tmp_inotify(log_file, journal_dir);
     });
@@ -68,16 +68,17 @@ fn tmp_inotify(log_file: PathBuf, journal_dir: PathBuf) {
     use std::fs::OpenOptions;
     use std::time::Instant;
 
-    fn go<W: Write>(mut lf: W, journal_dir: PathBuf) -> errs::Result<()> {
+    fn go<W: Write>(mut lf: W, target: PathBuf) -> errs::Result<()> {
         let start = Instant::now();
         let mut inotify = Inotify::init()?;
-        eprintln!("watching {journal_dir:?}...");
-        writeln!(lf, "tmp_inotify: watching {journal_dir:?}")?;
-        inotify.watches().add(journal_dir, WatchMask::MODIFY)?;
+        eprintln!("watching {target:?}...");
+        writeln!(lf, "tmp_inotify: watching {target:?}")?;
+        inotify.watches().add(target, WatchMask::ALL_EVENTS)?;
         let mut buffer = [0u8; 4096];
         loop {
             let events = inotify.read_events_blocking(&mut buffer)?;
             let t = Instant::now().duration_since(start);
+            writeln!(lf, "tmp_inotify: [{t:?}] found some events!")?;
             for event in events {
                 writeln!(lf, "tmp_inotify: [{t:?}] {event:?}")?;
             }
