@@ -58,7 +58,11 @@ fn edit_today() -> errs::Result<()> {
         .arg(this_week.path())
         .status()?;
 
-    this_week.commit()
+    if let Err(e) = this_week.commit() {
+        eprintln!("failed to sync with upstream: {e:?}");
+    }
+
+    Ok(())
 }
 
 fn tmp_inotify(log_file: PathBuf, journal_file: PathBuf) {
