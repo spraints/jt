@@ -46,9 +46,9 @@ fn edit_today() -> errs::Result<()> {
     this_week.prepare_today()?;
 
     let log_file = Journal::log_file("today.log")?;
-    let journal_dir = this_week.path();
+    let journal_file = this_week.path();
     std::thread::spawn(move || {
-        tmp_inotify(log_file, journal_dir);
+        tmp_inotify(log_file, journal_file);
     });
     //std::thread::sleep(std::time::Duration::from_secs(3));
 
@@ -61,8 +61,8 @@ fn edit_today() -> errs::Result<()> {
     this_week.commit()
 }
 
-fn tmp_inotify(log_file: PathBuf, journal_dir: PathBuf) {
-    eprintln!("sup lets see {log_file:?} // {journal_dir:?}");
+fn tmp_inotify(log_file: PathBuf, journal_file: PathBuf) {
+    eprintln!("sup lets see {log_file:?} // {journal_file:?}");
 
     use inotify::{Inotify, WatchMask};
     use std::fs::OpenOptions;
@@ -86,7 +86,7 @@ fn tmp_inotify(log_file: PathBuf, journal_dir: PathBuf) {
     }
 
     match OpenOptions::new().create(true).append(true).open(&log_file) {
-        Ok(mut f) => match go(&mut f, journal_dir) {
+        Ok(mut f) => match go(&mut f, journal_file) {
             Err(e) => writeln!(f, "tmp_inotify: fatal: {e:?}").unwrap(),
             Ok(()) => eprintln!("tmp_inotify: go finished"),
         },
