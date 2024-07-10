@@ -22,6 +22,7 @@ fn main() {
         Today => edit_today(),
         JustPush => tmp_push(),
         JustFetch => tmp_fetch(),
+        JustView => tmp_view(),
         Path => show_path(),
         args => todo(args),
     };
@@ -143,6 +144,17 @@ fn tmp_fetch() -> errs::Result<()> {
             .status()?
             .check()?;
     }
+
+    Ok(())
+}
+
+fn tmp_view() -> errs::Result<()> {
+    std::process::Command::new("gh")
+        .arg("repo")
+        .arg("view")
+        .arg(REMOTE_REPO_URL)
+        .status()?
+        .check()?;
 
     Ok(())
 }

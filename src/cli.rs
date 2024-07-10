@@ -23,6 +23,9 @@ pub enum JournalTimeCli {
     /// today'.
     JustFetch,
 
+    /// Hack to show my journal with 'gh repo view'.
+    JustView,
+
     /// Show the path to the journal repo.
     Path,
 
