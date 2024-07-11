@@ -51,12 +51,12 @@ impl<J: JournalTopLevel> Books<J> {
         };
 
         let book_dir = self.j.path().join("books");
-        create_dir_all(&book_dir)?;
+        create_dir_all(book_dir)?;
 
         let relative_path = format!("books/{slug}.md");
 
         let book_path = self.j.path().join(&relative_path);
-        let f = File::create_new(&book_path)?;
+        let f = File::create_new(book_path)?;
         writeln!(&f, "---")?;
         serde_yaml::to_writer(&f, &frontmatter)?;
         writeln!(&f, "---")?;

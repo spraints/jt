@@ -38,12 +38,10 @@ impl Journal {
     }
 
     pub fn git_cmd(&self) -> Command {
-        {
-            let path = &self.repo_path;
-            let mut c = Command::new("git");
-            c.current_dir(path);
-            return c;
-        }
+        let path = &self.repo_path;
+        let mut c = Command::new("git");
+        c.current_dir(path);
+        c
     }
 
     pub fn current_week(&self) -> errs::Result<JournalFile<Journal>> {

@@ -17,7 +17,7 @@ mod toplevel;
 //
 // In the meantime, if you're not spraints, this is where you should configure where your repo will
 // go when you run 'jt just-push' or 'jt just-fetch'.
-const REMOTE_REPO_URL: &'static str = "git@github.com:spraints/work-journal.git";
+const REMOTE_REPO_URL: &str = "git@github.com:spraints/work-journal.git";
 
 fn main() {
     let args = cli::parse_args();
@@ -85,7 +85,7 @@ fn edit_book_notes(args: cli::BookNoteArgs) -> errs::SimpleResult {
     let entry = match slug {
         None => books
             .most_recent_notes()?
-            .ok_or_else(|| "no book notes found, maybe add a new book?")?,
+            .ok_or("no book notes found, maybe add a new book?")?,
         Some(slug) => books
             .get(&slug)?
             .ok_or_else(|| format!("no book like {slug} is in the journal"))?,
