@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Args, Parser, Subcommand};
 
 pub fn parse_args() -> JournalTimeCli {
     JournalTimeCli::parse()
@@ -10,6 +10,9 @@ pub fn parse_args() -> JournalTimeCli {
 pub enum JournalTimeCli {
     /// Edit today's journal entry.
     Today,
+
+    /// Subcommands for books.
+    Book(BookArgs),
 
     /// Hack to push my journal to github so I have a backup of it.
     ///
@@ -34,4 +37,22 @@ pub enum JournalTimeCli {
     Recent,
     Config,
     Find,
+}
+
+#[derive(Args, Debug)]
+pub struct BookArgs {
+    #[clap(subcommand)]
+    pub cmd: BookCmd,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum BookCmd {
+    /// List books that I'm making notes about.
+    List,
+
+    /// Add a new book.
+    Add,
+
+    /// Edit notes for a book.
+    Notes,
 }
