@@ -1,5 +1,6 @@
 pub type AnyError = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, AnyError>;
+pub type SimpleResult = Result<()>;
 
 pub trait CheckStatus {
     fn check(self) -> std::result::Result<(), String>;

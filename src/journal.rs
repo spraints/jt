@@ -5,8 +5,11 @@ use std::process::Command;
 
 use chrono::{prelude::*, Days};
 
+use crate::books::Books;
 use crate::errs::{self, CheckStatus};
+use crate::toplevel::JournalTopLevel;
 
+#[derive(Clone)]
 pub struct Journal {
     repo_path: PathBuf,
 }
@@ -35,17 +38,20 @@ impl Journal {
     }
 
     pub fn git_cmd(&self) -> Command {
-        let mut c = Command::new("git");
-        c.current_dir(&self.repo_path);
-        return c;
+        {
+            let path = &self.repo_path;
+            let mut c = Command::new("git");
+            c.current_dir(path);
+            return c;
+        }
     }
 
-    pub fn current_week(&self) -> errs::Result<JournalFile> {
+    pub fn current_week(&self) -> errs::Result<JournalFile<Journal>> {
         let today = Local::now().date_naive();
         let res = JournalFile {
             repo_path: self.repo_path.clone(),
             today,
-            journal: self,
+            j: self.clone(),
         };
         create_dir_all(
             res.path()
@@ -79,15 +85,19 @@ impl Journal {
             },
         }
     }
+
+    pub fn books(&self) -> Books<Self> {
+        Books::new(self.clone())
+    }
 }
 
-pub struct JournalFile<'a> {
+pub struct JournalFile<J: JournalTopLevel> {
     repo_path: PathBuf,
     today: NaiveDate,
-    journal: &'a Journal,
+    j: J,
 }
 
-impl<'a> JournalFile<'a> {
+impl<J: JournalTopLevel> JournalFile<J> {
     pub fn start_of_week(&self) -> NaiveDate {
         self.today - Days::new(self.today.weekday().days_since(Weekday::Mon) as u64)
     }
@@ -152,20 +162,28 @@ impl<'a> JournalFile<'a> {
         Ok(())
     }
 
-    pub fn commit(&mut self) -> errs::Result<()> {
+    pub fn commit(&mut self) -> errs::SimpleResult {
+        self.j.commit_file(self.relative_path())
+    }
+}
+
+impl JournalTopLevel for Journal {
+    fn path(&self) -> PathBuf {
+        self.repo_path.clone()
+    }
+
+    fn commit_file(&self, relative_path: impl AsRef<Path>) -> errs::SimpleResult {
         // todo - suppress output maybe, or show commands?
         println!("commit changes to journal repository...");
-        self.journal
-            .git_cmd()
+        self.git_cmd()
             .arg("add")
-            .arg(self.relative_path())
+            .arg(relative_path.as_ref().as_os_str())
             .status()?
             .check()?;
 
         // TODO - this will exit with an error if there's nothing to commit, but that's something
         // we can ignore here.
-        self.journal
-            .git_cmd()
+        self.git_cmd()
             .arg("commit")
             .arg("-q")
             .arg("-m")
@@ -177,7 +195,7 @@ impl<'a> JournalFile<'a> {
         // set up a remote.
         println!("push journal repository...");
 
-        self.journal.git_cmd().arg("push").status()?.check()?;
+        self.git_cmd().arg("push").status()?.check()?;
 
         Ok(())
     }

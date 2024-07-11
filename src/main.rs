@@ -1,13 +1,16 @@
-use std::{io::Write, path::PathBuf};
+use std::io::Write;
+use std::path::{Path, PathBuf};
 
 use cli::JournalTimeCli::*;
 use errs::CheckStatus;
 
-use crate::journal::Journal;
+use crate::{books::AddBookArgs, journal::Journal};
 
+mod books;
 mod cli;
 mod errs;
 mod journal;
+mod toplevel;
 
 // todo - don't push to a hard coded URL like this. Instead, use 'pt config' to set the remote on
 // the Journal so that 'jt today' can just 'git push'.
@@ -20,6 +23,7 @@ fn main() {
     let args = cli::parse_args();
     let res = match args {
         Today => edit_today(),
+        Book(args) => book_main(args),
         JustPush => tmp_push(),
         JustFetch => tmp_fetch(),
         JustView => tmp_view(),
@@ -29,6 +33,66 @@ fn main() {
     if let Err(e) = res {
         eprintln!("error: {e:?}");
     }
+}
+
+fn book_main(args: cli::BookArgs) -> errs::SimpleResult {
+    let cli::BookArgs { cmd } = args;
+    match cmd {
+        cli::BookCmd::List => list_books(),
+        cli::BookCmd::Add(args) => add_book(args),
+        cli::BookCmd::Notes(args) => edit_book_notes(args),
+    }
+}
+
+fn list_books() -> errs::SimpleResult {
+    let journal = Journal::new()?;
+    for book in journal.books().iter()? {
+        println!("{book}");
+    }
+    Ok(())
+}
+
+fn add_book(args: cli::AddBookArgs) -> errs::SimpleResult {
+    let cli::AddBookArgs {
+        author,
+        isbn,
+        media,
+        slug,
+        title,
+    } = args;
+    let media = match media {
+        cli::BookMedia::Kindle => "kindle",
+        cli::BookMedia::HardCopy => "hard copy",
+    }
+    .to_string();
+
+    let book = Journal::new()?.books().add(AddBookArgs {
+        authors: author,
+        isbn,
+        media: media.to_string(),
+        slug,
+        title: title.join(" "),
+    })?;
+
+    println!("added:");
+    println!("{book}");
+    Ok(())
+}
+
+fn edit_book_notes(args: cli::BookNoteArgs) -> errs::SimpleResult {
+    let cli::BookNoteArgs { slug } = args;
+    let books = Journal::new()?.books();
+    let entry = match slug {
+        None => books
+            .most_recent_notes()?
+            .ok_or_else(|| "no book notes found, maybe add a new book?")?,
+        Some(slug) => books
+            .get(&slug)?
+            .ok_or_else(|| format!("no book like {slug} is in the journal"))?,
+    };
+    run_editor(entry.path())?;
+    entry.commit()?;
+    Ok(())
 }
 
 fn todo(args: cli::JournalTimeCli) -> errs::Result<()> {
@@ -46,18 +110,7 @@ fn edit_today() -> errs::Result<()> {
     let mut this_week = journal.current_week()?;
     this_week.prepare_today()?;
 
-    let log_file = Journal::log_file("today.log")?;
-    let journal_file = this_week.path();
-    std::thread::spawn(move || {
-        tmp_inotify(log_file, journal_file);
-    });
-    //std::thread::sleep(std::time::Duration::from_secs(3));
-
-    // TODO - run the editor concurrently with a filesystem watcher that commits after every save.
-    let editor = std::env::var("EDITOR")?;
-    std::process::Command::new(editor)
-        .arg(this_week.path())
-        .status()?;
+    run_editor(this_week.path())?;
 
     if let Err(e) = this_week.commit() {
         eprintln!("failed to sync with upstream: {e:?}");
@@ -156,5 +209,20 @@ fn tmp_view() -> errs::Result<()> {
         .status()?
         .check()?;
 
+    Ok(())
+}
+
+fn run_editor(file: impl AsRef<Path>) -> errs::SimpleResult {
+    // TODO - finish the filesystem watcher so that it does a 'git commit' on each write.
+    let log_file = Journal::log_file("inotify.log")?;
+    let target = file.as_ref().to_owned();
+    std::thread::spawn(move || {
+        tmp_inotify(log_file, target);
+    });
+
+    let editor = std::env::var("EDITOR")?;
+    std::process::Command::new(editor)
+        .arg(file.as_ref().as_os_str())
+        .status()?;
     Ok(())
 }

@@ -10,3 +10,6 @@ chrono = "0.4.38"
 clap = { version = "4.5.7", features = ["derive"] }
 dirs = "5.0.1"
 inotify = "0.10.2"
+serde = { version = "1.0.204", features = ["derive", "serde_derive"] }
+serde_yaml = "0.9.34"
+yaml-front-matter = "0.1.0"
