@@ -11,4 +11,6 @@ pub trait JournalTopLevel: Clone {
 
 pub trait JournalEntity {
     fn path(&self) -> PathBuf;
+    fn journal_path(&self) -> PathBuf;
+    fn relative_path(&self) -> PathBuf;
 }

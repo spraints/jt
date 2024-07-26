@@ -146,6 +146,14 @@ impl<J: JournalTopLevel> JournalEntity for BookEntry<J> {
     fn path(&self) -> PathBuf {
         self.j.path().join(&self.relative_path)
     }
+
+    fn journal_path(&self) -> PathBuf {
+        self.j.path()
+    }
+
+    fn relative_path(&self) -> PathBuf {
+        self.relative_path.to_owned().into()
+    }
 }
 
 impl<J: JournalTopLevel> BookEntry<J> {

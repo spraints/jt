@@ -99,15 +99,22 @@ impl<J: JournalTopLevel> JournalEntity for JournalFile<J> {
     fn path(&self) -> PathBuf {
         self.repo_path.join(self.relative_path())
     }
+
+    fn journal_path(&self) -> PathBuf {
+        self.repo_path.clone()
+    }
+
+    fn relative_path(&self) -> PathBuf {
+        self.start_of_week()
+            .format("%Y/%m-%d.md")
+            .to_string()
+            .into()
+    }
 }
 
 impl<J: JournalTopLevel> JournalFile<J> {
     pub fn start_of_week(&self) -> NaiveDate {
         self.today - Days::new(self.today.weekday().days_since(Weekday::Mon) as u64)
-    }
-
-    pub fn relative_path(&self) -> String {
-        self.start_of_week().format("%Y/%m-%d.md").to_string()
     }
 
     pub fn prepare_today(&mut self) -> errs::Result<()> {

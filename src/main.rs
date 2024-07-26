@@ -214,17 +214,17 @@ fn tmp_view() -> errs::Result<()> {
 }
 
 fn run_editor<J: JournalEntity>(entity: &J) -> errs::SimpleResult {
-    let file = entity.path();
     // TODO - finish the filesystem watcher so that it does a 'git commit' on each write.
     let log_file = Journal::log_file("inotify.log")?;
-    let target = file.clone();
+    let target = entity.path();
     std::thread::spawn(move || {
         tmp_inotify(log_file, target);
     });
 
     let editor = std::env::var("EDITOR")?;
     std::process::Command::new(editor)
-        .arg(file.as_os_str())
+        .current_dir(entity.journal_path())
+        .arg(entity.relative_path())
         .status()?;
     Ok(())
 }
