@@ -8,3 +8,7 @@ pub trait JournalTopLevel: Clone {
     fn path(&self) -> PathBuf;
     fn commit_file(&self, path: impl AsRef<Path>) -> errs::SimpleResult;
 }
+
+pub trait JournalEntity {
+    fn path(&self) -> PathBuf;
+}

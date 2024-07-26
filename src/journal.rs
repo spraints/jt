@@ -7,7 +7,7 @@ use chrono::{prelude::*, Days};
 
 use crate::books::Books;
 use crate::errs::{self, CheckStatus};
-use crate::toplevel::JournalTopLevel;
+use crate::toplevel::{JournalEntity, JournalTopLevel};
 
 #[derive(Clone)]
 pub struct Journal {
@@ -95,13 +95,15 @@ pub struct JournalFile<J: JournalTopLevel> {
     j: J,
 }
 
+impl<J: JournalTopLevel> JournalEntity for JournalFile<J> {
+    fn path(&self) -> PathBuf {
+        self.repo_path.join(self.relative_path())
+    }
+}
+
 impl<J: JournalTopLevel> JournalFile<J> {
     pub fn start_of_week(&self) -> NaiveDate {
         self.today - Days::new(self.today.weekday().days_since(Weekday::Mon) as u64)
-    }
-
-    pub fn path(&self) -> PathBuf {
-        self.repo_path.join(self.relative_path())
     }
 
     pub fn relative_path(&self) -> String {

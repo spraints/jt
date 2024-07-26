@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use yaml_front_matter::YamlFrontMatter;
 
 use crate::errs;
-use crate::toplevel::JournalTopLevel;
+use crate::toplevel::{JournalEntity, JournalTopLevel};
 
 pub struct Books<J> {
     j: J,
@@ -142,11 +142,13 @@ impl<J> Display for BookEntry<J> {
     }
 }
 
-impl<J: JournalTopLevel> BookEntry<J> {
-    pub fn path(&self) -> PathBuf {
+impl<J: JournalTopLevel> JournalEntity for BookEntry<J> {
+    fn path(&self) -> PathBuf {
         self.j.path().join(&self.relative_path)
     }
+}
 
+impl<J: JournalTopLevel> BookEntry<J> {
     pub fn commit(&self) -> errs::SimpleResult {
         self.j.commit_file(&self.relative_path)
     }

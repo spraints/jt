@@ -1,8 +1,9 @@
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use cli::JournalTimeCli::*;
 use errs::CheckStatus;
+use toplevel::JournalEntity;
 
 use crate::{books::AddBookArgs, journal::Journal};
 
@@ -90,7 +91,7 @@ fn edit_book_notes(args: cli::BookNoteArgs) -> errs::SimpleResult {
             .get(&slug)?
             .ok_or_else(|| format!("no book like {slug} is in the journal"))?,
     };
-    run_editor(entry.path())?;
+    run_editor(&entry)?;
     entry.commit()?;
     Ok(())
 }
@@ -110,7 +111,7 @@ fn edit_today() -> errs::Result<()> {
     let mut this_week = journal.current_week()?;
     this_week.prepare_today()?;
 
-    run_editor(this_week.path())?;
+    run_editor(&this_week)?;
 
     if let Err(e) = this_week.commit() {
         eprintln!("failed to sync with upstream: {e:?}");
@@ -212,17 +213,18 @@ fn tmp_view() -> errs::Result<()> {
     Ok(())
 }
 
-fn run_editor(file: impl AsRef<Path>) -> errs::SimpleResult {
+fn run_editor<J: JournalEntity>(entity: &J) -> errs::SimpleResult {
+    let file = entity.path();
     // TODO - finish the filesystem watcher so that it does a 'git commit' on each write.
     let log_file = Journal::log_file("inotify.log")?;
-    let target = file.as_ref().to_owned();
+    let target = file.clone();
     std::thread::spawn(move || {
         tmp_inotify(log_file, target);
     });
 
     let editor = std::env::var("EDITOR")?;
     std::process::Command::new(editor)
-        .arg(file.as_ref().as_os_str())
+        .arg(file.as_os_str())
         .status()?;
     Ok(())
 }
