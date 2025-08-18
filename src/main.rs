@@ -17,7 +17,7 @@ mod toplevel;
 //
 // In the meantime, if you're not spraints, this is where you should configure where your repo will
 // go when you run 'jt just-push' or 'jt just-fetch'.
-const REMOTE_REPO_URL: &str = "git@github.com:spraints/work-journal.git";
+const REMOTE_REPO_URL: &str = "git@github.com:spraints/work-journal-ps.git";
 
 fn main() {
     let args = cli::parse_args();
