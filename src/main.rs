@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::path::PathBuf;
 
 use cli::JournalTimeCli::*;
@@ -120,7 +119,13 @@ fn edit_today() -> errs::Result<()> {
     Ok(())
 }
 
+#[cfg(not(target_os = "linux"))]
+fn tmp_inotify(_log_file: PathBuf, _journal_file: PathBuf) {}
+
+#[cfg(target_os = "linux")]
 fn tmp_inotify(log_file: PathBuf, journal_file: PathBuf) {
+    use std::io::Write;
+
     eprintln!("sup lets see {log_file:?} // {journal_file:?}");
 
     use inotify::{Inotify, WatchMask};
